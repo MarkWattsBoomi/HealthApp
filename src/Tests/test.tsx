@@ -69,6 +69,7 @@ export default class Test extends FlowComponent {
     testPausedTime: number;
     testEndedTime: number;
     round: number = 0;
+    roundStartedTime: number;
 
     waitingClick: boolean = false;
     maxResults: number = 0;
@@ -312,6 +313,7 @@ export default class Test extends FlowComponent {
         }
 
         this.refreshInfo();
+        this.roundStartedTime = new Date().getTime();
         
         if(this.inactivityTimeoutSeconds>0) {
             this.watchInactivity(this.inactivityTimeoutSeconds, this.inactiveTimeout)
@@ -359,7 +361,7 @@ export default class Test extends FlowComponent {
         if(this.waitingClick===true) {
             this.unwatchInactivity();
             this.waitingClick=false;
-            let score: Result = this.getScore(this.roundNumber, time.getTime() - this.testStartedTime, accuracy);
+            let score: Result = this.getScore(this.roundNumber, time.getTime() - this.roundStartedTime, accuracy);
             this.results.add(score);
         }
     }

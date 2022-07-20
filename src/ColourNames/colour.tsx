@@ -3,7 +3,7 @@ import React = require("react");
 export default class ColourName extends React.Component<any,any> {
     
     colours: Array<any> = [
-        {name:"Red",color:"#ff0099"},
+        {name:"Red",color:"#ff0000"},
         {name:"Green",color:"#00cf08"},
         {name:"Blue",color:"#0089ff"},
         {name:"Yellow",color:"#ffe900"},

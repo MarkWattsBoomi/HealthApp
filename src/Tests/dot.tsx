@@ -18,13 +18,16 @@ export default class Dot extends React.Component<any,any> {
     clicked(e: any) {
         e.preventDefault();
         e.stopPropagation();
+
+        let event: any = e.clientX? e : e.changedTouches[0];
         
         this.inner?.classList.add("test-dot-clicked");
         let rect: DOMRect = this.outer.getBoundingClientRect();
         let xCentre: number = rect.x + (rect.width / 2);
         let yCentre: number = rect.y + (rect.height / 2);
-        let xAcc: number = e.clientX - xCentre;
-        let yAcc: number = e.clientY - yCentre;
+
+        let xAcc: number = event.clientX - xCentre;
+        let yAcc: number = event.clientY - yCentre;
         this.avg = (xAcc + yAcc) / 2;
         let root: Test = this.props.root;
 
