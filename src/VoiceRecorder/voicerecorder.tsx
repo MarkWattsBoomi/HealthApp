@@ -11,7 +11,7 @@ declare const manywho: any;
 export default class VoiceRecorder extends FlowComponent {
     
     recorder: HTMLInputElement;
-    mediaRecorder: any;
+    mediaRecorder: MediaRecorder;
     results: Results;
     maxDuration: number = 0;
     countDownTimer: number =-1;
@@ -126,7 +126,10 @@ export default class VoiceRecorder extends FlowComponent {
 
     async startRecording() {
         this.setState({buffer: [], dataurl: undefined});
-        let audio = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        let sampleRate : number = parseInt(this.getAttribute("SampleRate","44100"));
+        let sampleSize : number = parseInt(this.getAttribute("SampleSize","16"));
+        let channelCount : number = parseInt(this.getAttribute("ChannelCount","1"));
+        let audio = await navigator.mediaDevices.getUserMedia({ audio: { sampleSize: sampleSize, channelCount: channelCount, sampleRate: sampleRate}, video: false });
         if(audio){
             this.setState({audio: audio},this.updateButtons);
             this.recording();

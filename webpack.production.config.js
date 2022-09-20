@@ -36,11 +36,11 @@ module.exports = function(env) {
         },
         externals: {
             "react": "React",
+            //"flow-component-model": "FlowComponentModel"
         },
         plugins: [
             new MiniCssExtractPlugin({ filename: flow.filenames.css })
         ],
     }
-
     return config;
 };
