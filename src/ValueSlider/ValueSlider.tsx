@@ -28,6 +28,12 @@ export default class ValueSlider extends FlowComponent {
         this.drag = this.drag.bind(this);
         this.dragEnd = this.dragEnd.bind(this);
         this.dragOut = this.dragOut.bind(this);
+
+        this.touchStart = this.touchStart.bind(this);
+        this.touchDrag = this.touchDrag.bind(this);
+        this.touchEnd = this.touchEnd.bind(this);
+        this.touchOut = this.touchOut.bind(this);
+        this.touchClicked = this.touchClicked.bind(this);
         //this.currentValue = parseInt(this.getAttribute("step","10")) / 2;
         this.results = new Results(this.getAttribute("resultTypeName","TestResult"));
     }
@@ -161,6 +167,16 @@ export default class ValueSlider extends FlowComponent {
         await this.setValue(newVal);
     }
 
+    async touchClicked(e: any) {
+        const rect = this.canvas.getBoundingClientRect();
+        let y: number = e.touches[0].clientY - rect.top;
+        let height: number = this.canvas.height;
+        let pcDown: number = Math.round((y / height)*100); 
+        let divisions: number = parseInt(this.getAttribute("step","10"));
+        let newVal: number = Math.round(divisions * (pcDown / 100));
+        await this.setValue(newVal);
+    }
+
     async setValue(newVal: number) {
         let divisions: number = parseInt(this.getAttribute("step","10"));
         if(newVal < 0) {newVal = 0}
@@ -192,6 +208,13 @@ export default class ValueSlider extends FlowComponent {
         this.dragging = true;
     }
 
+    touchStart(e: any) {
+        e.stopPropagation();
+        e.preventDefault();
+        this.dragging = true;
+        console.log("touch start");
+    }
+
     drag(e: any) {
         if(this.dragging) {
             e.stopPropagation();
@@ -204,6 +227,20 @@ export default class ValueSlider extends FlowComponent {
         } 
     }
 
+    touchDrag(e: any) {
+        if(this.dragging) {
+            e.stopPropagation();
+            e.preventDefault();
+            const rect = this.canvas.getBoundingClientRect();
+            let y: number = e.touches[0].clientY - rect.top;
+            console.log("rt=" + rect.top + " dp=" + e.touches[0].clientY + " off=" + y);
+            if(y < 0) y=0;
+            if(y > rect.height) y=rect.height;
+            this.pointer.style.top = (y - 8) + "px";
+            console.log("touch draging");
+        } 
+    }
+
     dragEnd(e: any) {
         if(this.dragging) {
             e.stopPropagation();
@@ -213,12 +250,32 @@ export default class ValueSlider extends FlowComponent {
         } 
     }
 
+    touchEnd(e: any) {
+        if(this.dragging) {
+            e.stopPropagation();
+            e.preventDefault();
+            this.dragging = false;
+            this.touchClicked(e);
+            console.log("touch drag end");
+        } 
+    }
+
     dragOut(e: any) {
         if(this.dragging) {
             e.stopPropagation();
             e.preventDefault();
             this.dragging = false;
             this.canvasClicked(e);
+        } 
+    }
+
+    touchOut(e: any) {
+        if(this.dragging) {
+            e.stopPropagation();
+            e.preventDefault();
+            this.dragging = false;
+            this.canvasClicked(e);
+            console.log("touch drag out");
         } 
     }
 
@@ -242,8 +299,12 @@ export default class ValueSlider extends FlowComponent {
             <div
                 className="vslid"
                 onMouseMove={this.drag}
+                onTouchMove={this.touchDrag}
                 onMouseUp={this.dragEnd}
+                onTouchEnd={this.touchEnd}
                 onMouseLeave={this.dragOut}
+                onTouchCancel={this.touchOut}
+                style={{touchAction:"none"}}
             >
                 <div
                     className="vslid-left"
@@ -283,6 +344,7 @@ export default class ValueSlider extends FlowComponent {
                             ref={(element: HTMLDivElement) => {this.setPointer(element)}}
                             className="vslid-pointer"
                             onMouseDown={this.dragStart}
+                            onTouchStart={this.touchStart}
                         />
                     </div>
                     <div
