@@ -9,13 +9,16 @@ export default class ValueSlider extends FlowComponent {
     selectedOption: string = "";
     canvas: HTMLCanvasElement;
     pointer: HTMLDivElement;
-    currentValue: number;
+    pointerOuter: HTMLDivElement;
     dragging: boolean = false;
     topMargin: number = 10;
     bottomMargin: number = 10;
     leftMargin: number = 30;
     rightMargin: number = 30;
     results: Results;
+    //used to store the clientY during a touch drag since touchEnd doesn't have this value.
+    touchY: number;
+    pointerYOffset: number;
 
     
     constructor(props: any) {
@@ -36,6 +39,7 @@ export default class ValueSlider extends FlowComponent {
         this.touchClicked = this.touchClicked.bind(this);
         //this.currentValue = parseInt(this.getAttribute("step","10")) / 2;
         this.results = new Results(this.getAttribute("resultTypeName","TestResult"));
+        this.state={currentValue: 50}
     }
 
     async componentDidMount(): Promise<void> {
@@ -63,10 +67,19 @@ export default class ValueSlider extends FlowComponent {
     setPointer(pointer: HTMLDivElement){
         if(pointer){
             this.pointer = pointer;
-            this.positionPointer();
         }
         else {
             this.pointer = undefined;
+        }
+    }
+
+    setPointerOuter(pointerOuter: HTMLDivElement){
+        if(pointerOuter){
+            this.pointerOuter = pointerOuter;
+            this.positionPointer();
+        }
+        else {
+            this.pointerOuter = undefined;
         }
     }
 
@@ -136,23 +149,23 @@ export default class ValueSlider extends FlowComponent {
     }
 
     positionPointer() {
-        if(this.canvas && this.pointer && this.currentValue){ 
+        if(this.canvas && this.pointerOuter){ 
             const rect = this.canvas.getBoundingClientRect();
             let width: number = this.canvas.width;
             let height: number = this.canvas.height;
             let vCenter: number = width / 2;
             let divisions: number = parseInt(this.getAttribute("step","10"));
-            let divOffset: number = (height-(this.topMargin + this.bottomMargin)) / divisions;
-            let y: number = (this.currentValue * divOffset) + this.topMargin; // - rect.top;
+            let divOffset: number = (height-(this.topMargin + this.bottomMargin)) / divisions; // this is the number of px per division
+            let y: number = (this.state.currentValue * divOffset) + this.topMargin; // - rect.top;
 
-            this.pointer.style.left = (vCenter - 8) + "px";
-            this.pointer.style.top = (y - 8) + "px";
-            this.pointer.style.display = "unset";
+            this.pointerOuter.style.left = (vCenter - 32) + "px";
+            this.pointerOuter.style.top = (y - 32) + "px";
+            this.pointerOuter.style.display = "flex";
 
         }
         else {
-            if(this.pointer) {
-                this.pointer.style.display = "none";
+            if(this.pointerOuter) {
+                this.pointerOuter.style.display = "none";
             }
         }
     }
@@ -160,6 +173,8 @@ export default class ValueSlider extends FlowComponent {
     async canvasClicked(e: any) {
         const rect = this.canvas.getBoundingClientRect();
         let y: number = e.clientY - rect.top;
+        if(y < 0) y=0;
+        if(y > rect.height) y=rect.height;
         let height: number = this.canvas.height;
         let pcDown: number = Math.round((y / height)*100); 
         let divisions: number = parseInt(this.getAttribute("step","10"));
@@ -169,19 +184,23 @@ export default class ValueSlider extends FlowComponent {
 
     async touchClicked(e: any) {
         const rect = this.canvas.getBoundingClientRect();
-        let y: number = e.touches[0].clientY - rect.top;
+        let y: number = this.touchY - rect.top;
+        if(y < 0) y=0;
+        if(y > rect.height) y=rect.height;
         let height: number = this.canvas.height;
         let pcDown: number = Math.round((y / height)*100); 
         let divisions: number = parseInt(this.getAttribute("step","10"));
         let newVal: number = Math.round(divisions * (pcDown / 100));
+        this.touchY = undefined;
         await this.setValue(newVal);
+
     }
 
     async setValue(newVal: number) {
         let divisions: number = parseInt(this.getAttribute("step","10"));
         if(newVal < 0) {newVal = 0}
         if(newVal > divisions) {newVal = divisions}
-        this.currentValue = newVal;
+        
         this.positionPointer();
         let result: Result;
         if(this.results.items.has(1)){
@@ -198,8 +217,12 @@ export default class ValueSlider extends FlowComponent {
             await this.triggerOutcome("OnSelect")
         }
         else {
-           manywho.engine.sync(this.flowKey); 
+            let model: any = manywho.model.getComponent(this.componentId, this.flowKey);
+            if(model.hasEvents) {
+                manywho.engine.sync(this.flowKey); 
+            }
         }
+        this.setState({currentValue: newVal});
     }
 
     dragStart(e: any) {
@@ -211,8 +234,12 @@ export default class ValueSlider extends FlowComponent {
     touchStart(e: any) {
         e.stopPropagation();
         e.preventDefault();
+        this.touchY = e.touches[0].clientY;
+        let y: number = e.touches[0]?.clientY;
+        const rect = this.canvas.getBoundingClientRect();
+        let outerTop = this.pointerOuter.getBoundingClientRect();
+        this.pointerYOffset = y - outerTop.y; // get the offset of the touch to the outer pointer
         this.dragging = true;
-        console.log("touch start");
     }
 
     drag(e: any) {
@@ -220,10 +247,11 @@ export default class ValueSlider extends FlowComponent {
             e.stopPropagation();
             e.preventDefault();
             const rect = this.canvas.getBoundingClientRect();
+            this.touchY = e.clientY;
             let y: number = e.clientY - rect.top;
-            if(y < 0) y=0;
-            if(y > rect.height) y=rect.height;
-            this.pointer.style.top = (y - 8) + "px";
+            if(y < 8) y=8;
+            if(y > (rect.height-8)) y=rect.height-8;
+            this.pointerOuter.style.top = (y - 32) + "px";
         } 
     }
 
@@ -232,12 +260,13 @@ export default class ValueSlider extends FlowComponent {
             e.stopPropagation();
             e.preventDefault();
             const rect = this.canvas.getBoundingClientRect();
+            this.touchY = e.touches[0].clientY;
             let y: number = e.touches[0].clientY - rect.top;
-            console.log("rt=" + rect.top + " dp=" + e.touches[0].clientY + " off=" + y);
-            if(y < 0) y=0;
-            if(y > rect.height) y=rect.height;
-            this.pointer.style.top = (y - 8) + "px";
-            console.log("touch draging");
+            //console.log("rt=" + rect.top + " dp=" + e.touches[0].clientY + " off=" + y);
+            if(y < 8) y=8;
+            if(y > (rect.height-8)) y=rect.height-8;
+            console.log("y=" + y);
+            this.pointerOuter.style.top = (y-32) + "px";
         } 
     }
 
@@ -256,7 +285,6 @@ export default class ValueSlider extends FlowComponent {
             e.preventDefault();
             this.dragging = false;
             this.touchClicked(e);
-            console.log("touch drag end");
         } 
     }
 
@@ -275,7 +303,7 @@ export default class ValueSlider extends FlowComponent {
             e.preventDefault();
             this.dragging = false;
             this.canvasClicked(e);
-            console.log("touch drag out");
+            //console.log("touch drag out");
         } 
     }
 
@@ -315,7 +343,7 @@ export default class ValueSlider extends FlowComponent {
                         <span className="vslid-summary-label">YOUR</span>
                         <span className="vslid-summary-label">HEALTH</span>
                         <span className="vslid-summary-label">TODAY</span>
-                        <span className="vslid-summary-value">{100 - this.currentValue}</span>
+                        <span className="vslid-summary-value">{100 - this.state.currentValue}</span>
                         
                     </div>
                 </div>
@@ -341,11 +369,16 @@ export default class ValueSlider extends FlowComponent {
                             
                         />
                         <div 
-                            ref={(element: HTMLDivElement) => {this.setPointer(element)}}
-                            className="vslid-pointer"
+                            ref={(element: HTMLDivElement) => {this.setPointerOuter(element)}}
+                            className="vslid-pointer-outer"
                             onMouseDown={this.dragStart}
                             onTouchStart={this.touchStart}
-                        />
+                        >
+                            <div 
+                                className="vslid-pointer"
+                                ref={(element: HTMLDivElement) => {this.setPointer(element)}}
+                            />  
+                        </div>
                     </div>
                     <div
                         className="vslid-bottom"
