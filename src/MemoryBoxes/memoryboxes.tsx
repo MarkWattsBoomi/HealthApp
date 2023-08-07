@@ -170,10 +170,10 @@ export default class MemoryBoxes extends FlowComponent {
     }
 
     refreshInfo() {
-        this.overlay.forceUpdate();
-        this.header.forceUpdate();
-        this.footer.forceUpdate();
-        this.boxes.forEach((box: MemoryBox) => {
+        this.overlay?.forceUpdate();
+        this.header?.forceUpdate();
+        this.footer?.forceUpdate();
+        this.boxes?.forEach((box: MemoryBox) => {
             box.forceUpdate();
         });
     }

@@ -70,16 +70,18 @@ export default class VoiceRecorder extends FlowComponent {
         if(previousResults && previousResults.items.length>0) {
             let previousResult = previousResults.items[0];
             let base64data = previousResult.properties?.result?.value as string;
-            let byteString = atob(base64data.split(',')[1]);
-            let ab = new ArrayBuffer(byteString.length);
-            let ia = new Uint8Array(ab);
-            for (var i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
+            if(base64data && base64data.length > 0) {
+                let byteString = atob(base64data.split(',')[1]);
+                let ab = new ArrayBuffer(byteString.length);
+                let ia = new Uint8Array(ab);
+                for (var i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: this.mime });
+                const url = window.URL.createObjectURL(blob);
+                // store the data into the state
+                this.setState({buffer: ab,  dataurl: url});
             }
-            const blob = new Blob([ab], { type: this.mime });
-            const url = window.URL.createObjectURL(blob);
-            // store the data into the state
-            this.setState({buffer: ab,  dataurl: url});
         }
 
         this.voiceButtonsElement=(
@@ -321,7 +323,7 @@ export default class VoiceRecorder extends FlowComponent {
             audio=(
                 <audio 
                     controls
-                    playsinline={true}
+                    playsInline={true}
                     style={{width: '100%'}}
                     ref={(element: HTMLAudioElement) => {this.audioElement = element}}
                     onEnded={this.stopPlay}

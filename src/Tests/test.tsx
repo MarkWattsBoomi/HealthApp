@@ -1,4 +1,4 @@
-import { FlowComponent, FlowMessageBox, FlowObjectDataArray, modalDialogButton } from 'flow-component-model';
+import { FlowComponent, FlowObjectDataArray} from 'flow-component-model';
 import * as React from 'react';
 import { CSSProperties } from 'react';
 import { clearInterval } from 'timers';
@@ -9,6 +9,8 @@ import OverlayButton from './OverlayButton';
 import './test.css';
 import TestHeader from './testheader';
 import TestOverlay from './testoverlay';
+import { FCMModal } from 'fcmkit';
+import { FCMModalButton } from 'fcmkit/lib/ModalDialog/FCMModalButton';
 
 
 declare const manywho: any;
@@ -61,7 +63,7 @@ export default class Test extends FlowComponent {
 
     buttons: Map<eRunState,any> = new Map();
 
-    messageBox: FlowMessageBox;
+    messageBox: FCMModal;
 
     submitted: boolean = false;
 
@@ -472,18 +474,19 @@ export default class Test extends FlowComponent {
             this.stopElapseTimer();
             this.elapsedTime -= (this.inactivityTimeoutSeconds * 1000);
         }
-        this.messageBox?.showMessageBox(
+        this.messageBox?.showDialog(
+            null,
             this.getAttribute("timeoutTitle","Inactivity"),
             this.getAttribute("timeoutMessage","No activity detected"),
             [
-                new modalDialogButton(this.getAttribute("timeoutContinueLabel","Continue"),this.ignoreTimeout), 
-                new modalDialogButton(this.getAttribute("timeoutAbortLabel","Exit"),this.cancelTest)
+                new FCMModalButton(this.getAttribute("timeoutContinueLabel","Continue"),this.ignoreTimeout), 
+                new FCMModalButton(this.getAttribute("timeoutAbortLabel","Exit"),this.cancelTest)
             ]
         );
     }
 
     ignoreTimeout() {
-        this.messageBox.hideMessageBox();
+        this.messageBox.hideDialog();
         //reset global timeout
         if(this.maxDuration > 0) {
            this.startElapseTimer();
@@ -500,7 +503,7 @@ export default class Test extends FlowComponent {
             this.elapsedTimer = undefined;
         }
         this.submitted=true; 
-        this.messageBox.hideMessageBox();
+        this.messageBox.hideDialog();
     }
 
     submit() {
@@ -553,8 +556,8 @@ export default class Test extends FlowComponent {
                 style={style}
                 ref={(e: HTMLDivElement) => {this.div=e}}
             >
-                <FlowMessageBox 
-                    ref={(element: FlowMessageBox) => {this.messageBox=element}}
+                <FCMModal 
+                    ref={(element: FCMModal) => {this.messageBox=element}}
                 />
                 {this.overlayElement}
                 <div

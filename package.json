@@ -1,23 +1,18 @@
 {
   "name": "rc",
   "version": "1.0.0",
-  "description": "Reaction Checker",
   "main": "index.js",
   "scripts": {
     "start": "webpack-dev-server",
-    "build": "webpack --config webpack.production.config.js",
-    "build-no-source-map": "webpack -p --config webpack.production.config.js --devtool none",
-    "upload": "node upload.js",
-    "update": "node update.js",
-    "debug": "ngrok http --host-header=rewrite 8080",
-    "debug2": "ngrok http --region eu --host-header=rewrite 8080"
+    "build": "webpack --config webpack.production.config.js"
   },
   "author": "Dell Boomi",
   "license": "MIT",
   "dependencies": {
     "@types/dom-mediacapture-record": "^1.0.10",
     "buffer": "^6.0.3",
-    "flow-component-model": "^1.7.33",
+    "fcmkit": "^1.0.10",
+    "flow-component-model": "^1.9.0",
     "react": "^16.3.2",
     "stream": "0.0.2",
     "timers": "^0.1.1"
@@ -39,7 +34,5 @@
       "js": "health.js",
       "css": "health.css"
     }
-  },
-  "bundledDependencies": [],
-  "bundleDependencies": []
+  }
 }
